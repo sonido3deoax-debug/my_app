@@ -1,0 +1,36 @@
+name: lib
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  media_kit: ^1.1.11
+  media_kit_libs_windows_audio: ^1.0.4
+  media_kit_libs_android_audio: ^1.0.5
+  google_fonts: ^6.2.1
+  audio_service: ^0.18.15
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/background.png
+    - assets/radio_logo.png
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "884827734666",
+    "project_id": "super-antequera-radio",
+    "storage_bucket": "super-antequera-radio.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884827734666:android:73acb2113bc8b01564e373",
+        "android_client_info": {
+          "package_name": "com.superantequeraradio.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVIM-Aoe6u5yhzM2a6tEJF_z9myM7e3hg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
