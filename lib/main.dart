@@ -513,12 +513,15 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
         body: Stack(
           children: [
             Positioned.fill(
-              child: Image.asset("assets/background.png", fit: BoxFit.cover),
+              child: Image.asset(
+                "assets/background.png",
+                fit: BoxFit.cover,
+              ),
             ),
             Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                child: Container(color: Colors.black.withOpacity(0.15)),
+                child: Container(color: Colors.black.withOpacity(0.45)),
               ),
             ),
             SafeArea(
@@ -530,8 +533,8 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                   final scale =
                   (constraints.maxHeight / 830).clamp(0.6, 1.0);
 
-                  final logoSize = (isMobile ? 200.0 : 225.0) * scale;
-                  final vinylSize = (isMobile ? 200.0 : 225.0) * scale;
+                  final logoSize = (isMobile ? 220.0 : 245.0) * scale;
+                  final vinylSize = logoSize;
                   final vinylIconSize = (isMobile ? 90.0 : 70.0) * scale;
                   final titleFontSize = (isMobile ? 19.0 : 24.0) * scale;
                   final artistFontSize = (isMobile ? 15.0 : 18.0) * scale;

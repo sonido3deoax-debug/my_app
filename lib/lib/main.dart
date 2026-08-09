@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'chat_screen.dart';
+import 'social_banner.dart';
 
 const _streamUrl = "http://us2.internet-radio.com:8387/live";
 
@@ -19,7 +22,7 @@ class RadioAudioHandler extends BaseAudioHandler with SeekHandler {
   RadioAudioHandler() {
     mediaItem.add(const MediaItem(
       id: _streamUrl,
-      album: "Live Radio",
+      album: "La Señal de Oaxaca",
       title: "Super Antequera Radio HD",
       artist: "Loading…",
     ));
@@ -90,6 +93,7 @@ late final RadioAudioHandler audioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+  await Firebase.initializeApp();
 
   audioHandler = await AudioService.init(
     builder: () => RadioAudioHandler(),
@@ -123,6 +127,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
   late AnimationController vinylController;
   late AnimationController liveController;
   late AnimationController eqController;
+  late AnimationController logoSpinController;
   late Animation<double> livePulse;
 
   // ⭐ Persistent equalizer state — these are now resized dynamically to
@@ -132,11 +137,11 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
   List<double> peakHeights = List.filled(40, 0);
   List<double> peakOpacity = List.filled(40, 1.0);
   List<double> phases =
-      List.generate(40, (i) => math.Random().nextDouble() * 2 * math.pi);
+  List.generate(40, (i) => math.Random().nextDouble() * 2 * math.pi);
   // ⭐ Per-bar random factor (0.55–1.0) so bars vary organically instead of
   // repeating in an obvious "every 5th bar" cycle.
   List<double> barFactors =
-      List.generate(40, (i) => 0.55 + math.Random().nextDouble() * 0.45);
+  List.generate(40, (i) => 0.55 + math.Random().nextDouble() * 0.45);
 
   @override
   void initState() {
@@ -146,6 +151,11 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
     vinylController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 8),
+    )..repeat();
+
+    logoSpinController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
     )..repeat();
 
     liveController = AnimationController(
@@ -222,7 +232,11 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
       final data = jsonDecode(jsonString);
 
       if (data["resultCount"] > 0) {
-        return data["results"][0]["artworkUrl100"];
+        final thumbnailUrl = data["results"][0]["artworkUrl100"] as String;
+        // iTunes serves higher-res art at the same path if you swap the
+        // "100x100" size segment for a bigger one — avoids stretching a
+        // tiny 100px thumbnail up to fill the vinyl.
+        return thumbnailUrl.replaceFirst("100x100bb", "600x600bb");
       }
     } catch (e) {
       debugPrint("Artwork fetch error: $e");
@@ -236,6 +250,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
     vinylController.dispose();
     liveController.dispose();
     eqController.dispose();
+    logoSpinController.dispose();
     // Note: player is NOT disposed here — it's owned by the global
     // audioHandler / background audio service and should keep running.
     super.dispose();
@@ -296,9 +311,9 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
         // segment column can ask for more height than it's actually given
         // (that's what caused the "overflowed by 2.1 pixels" error).
         final availableHeight =
-            constraints.maxHeight.isFinite ? constraints.maxHeight : 96.0;
+        constraints.maxHeight.isFinite ? constraints.maxHeight : 96.0;
         final maxSegments =
-            (availableHeight / segmentPitch).floor().clamp(4, 30);
+        (availableHeight / segmentPitch).floor().clamp(4, 30);
         final barMaxHeight = maxSegments * segmentPitch;
 
         // Resize state arrays if the fitting bar count changed
@@ -375,7 +390,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                         final isPeak = segIndex == peakSegment - 1 &&
                             peakOpacity[i] > 0.05;
                         final baseColor =
-                            segmentColor(segIndex, maxSegments);
+                        segmentColor(segIndex, maxSegments);
                         final color = isPeak
                             ? Colors.white.withOpacity(peakOpacity[i])
                             : baseColor;
@@ -391,12 +406,12 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                             borderRadius: BorderRadius.circular(1.5),
                             boxShadow: (lit || isPeak)
                                 ? [
-                                    BoxShadow(
-                                      color: color.withOpacity(0.7),
-                                      blurRadius: 4,
-                                      spreadRadius: 0.5,
-                                    ),
-                                  ]
+                              BoxShadow(
+                                color: color.withOpacity(0.7),
+                                blurRadius: 4,
+                                spreadRadius: 0.5,
+                              ),
+                            ]
                                 : null,
                           ),
                         );
@@ -425,19 +440,36 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
+          actions: [
+            Builder(
+              builder: (buttonContext) => IconButton(
+                icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+                tooltip: "Listener Chat",
+                onPressed: () {
+                  Navigator.push(
+                    buttonContext,
+                    MaterialPageRoute(builder: (context) => const ChatScreen()),
+                  );
+                },
+              ),
+            ),
+          ],
           title: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Flexible(
-                child: Text(
-                  "Super Antequera Radio HD",
-                  style: GoogleFonts.montserrat(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: isMobile ? 17 : 28,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Super Antequera Radio HD",
+                    style: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: isMobile ? 17 : 28,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 10),
@@ -481,12 +513,15 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
         body: Stack(
           children: [
             Positioned.fill(
-              child: Image.asset("assets/background.png", fit: BoxFit.cover),
+              child: Image.asset(
+                "assets/background.png",
+                fit: BoxFit.cover,
+              ),
             ),
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(color: Colors.black.withOpacity(0.6)),
+                filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                child: Container(color: Colors.black.withOpacity(0.45)),
               ),
             ),
             SafeArea(
@@ -494,22 +529,22 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                 builder: (context, constraints) {
                   // Scale everything down on shorter screens so the whole
                   // layout fits in one viewport instead of needing to scroll.
-                  // 760 is roughly what this layout needs at full size.
+                  // 830 accounts for the added social banner + its gaps.
                   final scale =
-                      (constraints.maxHeight / 760).clamp(0.62, 1.0);
+                  (constraints.maxHeight / 830).clamp(0.6, 1.0);
 
-                  final logoSize = (isMobile ? 90.0 : 110.0) * scale;
-                  final vinylSize = (isMobile ? 190.0 : 240.0) * scale;
-                  final vinylIconSize = (isMobile ? 70.0 : 80.0) * scale;
+                  final logoSize = (isMobile ? 220.0 : 245.0) * scale;
+                  final vinylSize = logoSize;
+                  final vinylIconSize = (isMobile ? 90.0 : 70.0) * scale;
                   final titleFontSize = (isMobile ? 19.0 : 24.0) * scale;
                   final artistFontSize = (isMobile ? 15.0 : 18.0) * scale;
                   final gapXl = 24.0 * scale;
-                  final gapLg = 16.0 * scale;
+                  final gapLg = 10.0 * scale;
                   final gapMd = 12.0 * scale;
                   final gapSm = 6.0 * scale;
-                  final panelPadding = 18.0 * scale;
-                  final eqHeight = 90.0 * scale;
-                  final controlsVPad = 12.0 * scale;
+                  final panelPadding = 12.0 * scale;
+                  final eqHeight = 55.0 * scale;
+                  final controlsVPad = 8.0 * scale;
 
                   return Center(
                     child: Padding(
@@ -523,12 +558,49 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Image.asset(
-                                "assets/radio_logo.png",
-                                width: logoSize,
-                                height: logoSize,
+                              const SocialBanner(),
+                              SizedBox(height: gapLg),
+
+                              AnimatedBuilder(
+                                animation: logoSpinController,
+                                builder: (context, child) {
+                                  final angle =
+                                      logoSpinController.value * 2 * math.pi;
+                                  return Transform(
+                                    alignment: Alignment.center,
+                                    transform: Matrix4.identity()
+                                      ..setEntry(3, 2, 0.001)
+                                      ..rotateY(angle),
+                                    child: child,
+                                  );
+                                },
+                                child: SizedBox(
+                                  width: logoSize,
+                                  height: logoSize,
+                                  child: ShaderMask(
+                                    shaderCallback: (bounds) {
+                                      return const RadialGradient(
+                                        center: Alignment.center,
+                                        radius: 0.5,
+                                        colors: [
+                                          Colors.white,
+                                          Colors.white,
+                                          Colors.transparent,
+                                        ],
+                                        stops: [0.0, 0.82, 1.0],
+                                      ).createShader(bounds);
+                                    },
+                                    blendMode: BlendMode.dstIn,
+                                    child: Image.asset(
+                                      "assets/radio_logo.png",
+                                      width: logoSize,
+                                      height: logoSize,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              SizedBox(height: gapXl),
+                              SizedBox(height: gapLg),
 
                               RotationTransition(
                                 turns: vinylController,
@@ -547,15 +619,41 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                                   ),
                                   child: ClipOval(
                                     child: artworkUrl != null
-                                        ? Image.network(
-                                            artworkUrl!,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Icon(
-                                            Icons.album,
-                                            color: Colors.white54,
-                                            size: vinylIconSize,
+                                        ? Container(
+                                      color: Colors.black,
+                                      child: Center(
+                                        child: FractionallySizedBox(
+                                          widthFactor: 0.98,
+                                          heightFactor: 0.98,
+                                          child: ShaderMask(
+                                            shaderCallback: (bounds) {
+                                              return const RadialGradient(
+                                                center: Alignment.center,
+                                                radius: 0.5,
+                                                colors: [
+                                                  Colors.white,
+                                                  Colors.white,
+                                                  Colors.transparent,
+                                                ],
+                                                stops: [0.0, 0.9, 1.0],
+                                              ).createShader(bounds);
+                                            },
+                                            blendMode: BlendMode.dstIn,
+                                            child: Image.network(
+                                              artworkUrl!,
+                                              fit: BoxFit.cover,
+                                              alignment:
+                                              const Alignment(0, -0.5),
+                                            ),
                                           ),
+                                        ),
+                                      ),
+                                    )
+                                        : Icon(
+                                      Icons.album,
+                                      color: Colors.white54,
+                                      size: vinylIconSize,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -609,11 +707,11 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                                       decoration: BoxDecoration(
                                         color: Colors.white.withOpacity(0.1),
                                         borderRadius:
-                                            BorderRadius.circular(20),
+                                        BorderRadius.circular(20),
                                       ),
                                       child: Row(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
+                                        MainAxisAlignment.spaceEvenly,
                                         children: [
                                           Icon(
                                             Icons.skip_previous,
@@ -645,7 +743,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
 
                                     Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.volume_mute,
@@ -675,8 +773,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                                   ],
                                 ),
                               ),
-
-                              SizedBox(height: gapMd),
+                              SizedBox(height: gapSm),
                             ],
                           ),
                         ),
