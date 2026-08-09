@@ -520,8 +520,8 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
             ),
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                child: Container(color: Colors.black.withOpacity(0.45)),
+                filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                child: Container(color: Colors.black.withOpacity(0.0)),
               ),
             ),
             SafeArea(
@@ -600,7 +600,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                              SizedBox(height: gapLg),
+                              SizedBox(height: 0),
 
                               RotationTransition(
                                 turns: vinylController,
