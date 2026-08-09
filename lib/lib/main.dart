@@ -500,7 +500,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
 
                   final logoSize = (isMobile ? 90.0 : 110.0) * scale;
                   final vinylSize = (isMobile ? 190.0 : 240.0) * scale;
-                  final vinylIconSize = (isMobile ? 60.0 : 70.0) * scale;
+                  final vinylIconSize = (isMobile ? 70.0 : 80.0) * scale;
                   final titleFontSize = (isMobile ? 19.0 : 24.0) * scale;
                   final artistFontSize = (isMobile ? 15.0 : 18.0) * scale;
                   final gapXl = 24.0 * scale;
