@@ -520,7 +520,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
             ),
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
                 child: Container(color: Colors.black.withOpacity(0.0)),
               ),
             ),
@@ -739,7 +739,7 @@ class _RadioAppState extends State<RadioApp> with TickerProviderStateMixin {
                                       ),
                                     ),
 
-                                    SizedBox(height: gapLg),
+                                    SizedBox(height: gapLg * 0.1), // or any smaller multiplier
 
                                     Row(
                                       mainAxisAlignment:
